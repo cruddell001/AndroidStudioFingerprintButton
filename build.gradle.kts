@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.25"
-    id("org.jetbrains.intellij") version "1.17.4"
+    id("org.jetbrains.intellij") version "1.+"
 }
 
 group = "com.ruddell"
@@ -9,29 +9,42 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    google()
 }
+
+val jdkVersion = 17
+
+java {
+    toolchain {
+        vendor.set(JvmVendorSpec.AZUL)
+        languageVersion.set(JavaLanguageVersion.of(jdkVersion)) // or appropriate version
+
+    }
+}
+
 
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("2023.2.6")
+    // version.set("233.14808.21")
+    localPath.set("/Applications/Android Studio.app/Contents")
     type.set("IC") // Target IDE Platform
 
-    plugins.set(listOf(/* Plugin Dependencies */))
+    plugins.set(listOf("org.jetbrains.android"))
 }
 
 tasks {
     // Set the JVM compatibility versions
     withType<JavaCompile> {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
+        sourceCompatibility = "$jdkVersion"
+        targetCompatibility = "$jdkVersion"
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
+        kotlinOptions.jvmTarget = "$jdkVersion"
     }
 
     patchPluginXml {
-        sinceBuild.set("232")
+        sinceBuild.set("233")
         untilBuild.set("242.*")
     }
 
@@ -43,5 +56,11 @@ tasks {
 
     publishPlugin {
         token.set(System.getenv("PUBLISH_TOKEN"))
+    }
+
+    runIde {
+        // Absolute path to installed target 3.5 Android Studio to use as
+        // IDE Development Instance (the "Contents" directory is macOS specific):
+        ideDir.set(file("/Applications/Android Studio.app/Contents"))
     }
 }
