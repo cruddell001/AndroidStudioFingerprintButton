@@ -8,6 +8,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.ui.UIUtil
 import java.io.BufferedReader
@@ -20,25 +21,26 @@ private const val TOOL_WINDOW_ID = "Fingerprint"
 class FingerprintButtonFactory: ToolWindowFactory {
     private var isActive = false
     private val adbPath = getAdbPath()
+    private val isDarkMode = UIUtil.isUnderDarcula()
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         println("FingerprintButtonFactory: ${toolWindow.id}")
         val myToolWindow = MyToolWindowUI(toolWindow)
         val content = toolWindow.contentManager.factory.createContent(myToolWindow.component, "", false)
         toolWindow.contentManager.addContent(content)
-        setupListener(project)
+        setupListener(project, toolWindow)
         setIcon(toolWindow)
     }
 
     private fun setIcon(toolWindow: ToolWindow) {
-        val icon = when (UIUtil.isUnderDarcula()) {
-            true -> "/icons/fingerprint_dark.png"
-            false -> "/icons/fingerprint.png"
+        val icon = when (isDarkMode) {
+            true -> "/icons/ic_fingerprint_dark.svg"
+            false -> "/icons/ic_fingerprint.svg"
         }
         toolWindow.setIcon(IconLoader.getIcon(icon, javaClass))
     }
 
-    private fun setupListener(project: Project) {
+    private fun setupListener(project: Project, toolWindow: ToolWindow) {
         project.messageBus.connect().subscribe(
             ToolWindowManagerListener.TOPIC,
             object : ToolWindowManagerListener {
@@ -51,9 +53,9 @@ class FingerprintButtonFactory: ToolWindowFactory {
                     val fingerprintButton = toolWindowManager.getToolWindow(TOOL_WINDOW_ID) ?: return println("FingerprintButtonFactory: skipping b/c fingerprintButton is null")
                     if (fingerprintButton.isVisible) {
                         println("FingerprintButtonFactory: Hiding $TOOL_WINDOW_ID and running adb command")
-                        // runAdbCommand(adbPath, "-e", "emu", "finger", "touch", "2")
                         sendFingerprintToAllDevices()
                         fingerprintButton.hide()
+                        setIcon(toolWindow)
                     } else {
                         println("FingerprintButtonFactory: $TOOL_WINDOW_ID is not visible")
                     }
